@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 import { watchGeofence, type GeofenceUpdate } from "@/lib/geofence";
 import { mockTrip } from "@/lib/mockTrip";
+import { useEscalation } from "@/lib/useEscalation";
 
 export default function Home() {
   const [update, setUpdate] = useState<GeofenceUpdate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [watching, setWatching] = useState(false);
+  const [msRemaining, setMsRemaining] = useState<number | null>(null);
+
+  const escalation = useEscalation();
 
   useEffect(() => {
     if (!watching) return;
@@ -19,6 +23,7 @@ export default function Home() {
         setUpdate(u);
         setError(null);
         console.log("[geofence]", u);
+        if (u.withinThreshold) escalation.trigger();
       },
       onError: (e) => {
         setError(e.message);
@@ -27,7 +32,17 @@ export default function Home() {
     });
 
     return stop;
-  }, [watching]);
+  }, [watching, escalation]);
+
+  // Poll the countdown for display purposes only.
+  useEffect(() => {
+    const id = setInterval(() => setMsRemaining(escalation.getMsRemaining()), 250);
+    return () => clearInterval(id);
+  }, [escalation]);
+
+  useEffect(() => {
+    console.log("[escalation]", escalation.state);
+  }, [escalation.state]);
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-zinc-50 px-6 text-center dark:bg-black">
@@ -71,6 +86,38 @@ export default function Home() {
             </p>
           </div>
         )}
+      </div>
+
+      <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-4 text-left text-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <p className="text-zinc-500 dark:text-zinc-400">Escalation state</p>
+        <p className="mt-1 text-lg font-semibold text-black dark:text-zinc-50">
+          {escalation.state}
+        </p>
+        {msRemaining !== null && (
+          <p className="text-zinc-500 dark:text-zinc-400">
+            Next stage in {(msRemaining / 1000).toFixed(1)}s
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            onClick={escalation.trigger}
+            className="rounded-full bg-zinc-800 px-4 py-2 text-white dark:bg-zinc-200 dark:text-black"
+          >
+            Simulate trigger
+          </button>
+          <button
+            onClick={escalation.pause}
+            className="rounded-full border border-zinc-300 px-4 py-2 text-black dark:border-zinc-700 dark:text-white"
+          >
+            Simulate screen-on (pause)
+          </button>
+          <button
+            onClick={escalation.dismiss}
+            className="rounded-full bg-red-600 px-4 py-2 text-white"
+          >
+            I&apos;m awake
+          </button>
+        </div>
       </div>
     </div>
   );
