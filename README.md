@@ -58,6 +58,20 @@ remaining server-side.
      app needs a "resubscribe" check on open.
    - No silent/data-only background push on iOS — every push must show a
      visible notification, which is actually fine for this use case.
+   - **The hardware ring/silent switch mutes all web audio (Web Audio API
+     and `<audio>`/`<video>` alike), and there is no web API to detect its
+     state or override it.** Same for system volume — a maxed-out gain
+     node still comes out at whatever the phone's physical volume is set
+     to. Neither is fixable from a web page; only native apps can bypass
+     this, via an entitlement not available to web content. Practical
+     mitigation: the app must clearly tell the user to check ringer/volume
+     before relying on it, since it can't verify this itself.
+   - The switch does *not* disable vibration (a separate "Vibrate on
+     Silent" setting, on by default) — so a real native push notification
+     in Phase 4 will still vibrate on silent, even though Phase 1's
+     client-side audio and custom `vibrate()` cannot. This is the one
+     concrete advantage Web Push has over the foreground geofence for
+     this specific failure mode.
 
 **Provider abstraction (designed now, used starting Phase 7):** each agency
 (GO, TTC, Viva) gets an adapter that normalizes its feed into one internal

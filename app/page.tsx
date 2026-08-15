@@ -16,6 +16,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [watching, setWatching] = useState(false);
   const [msRemaining, setMsRemaining] = useState<number | null>(null);
+  const [testingSound, setTestingSound] = useState(false);
   const isIOS = useSyncExternalStore(
     subscribeNoop,
     isIOSDevice,
@@ -76,6 +77,31 @@ export default function Home() {
         </p>
       </div>
 
+      <div className="w-full max-w-sm rounded-lg border border-amber-300 bg-amber-50 p-3 text-left text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+        <p className="font-medium">Before relying on this: check your phone.</p>
+        <p className="mt-1">
+          Your phone&apos;s ring/silent switch and volume mute or scale all
+          audio here — the app has no way to detect or override either.
+          Make sure the ringer is on and volume is up, and use the test
+          button below to confirm you can actually hear it.
+        </p>
+        <button
+          onClick={() => {
+            unlockAudio();
+            if (testingSound) {
+              stopAudio();
+              setTestingSound(false);
+            } else {
+              playAudioForStage("stage3");
+              setTestingSound(true);
+            }
+          }}
+          className="mt-2 rounded-full bg-amber-600 px-4 py-2 text-xs font-medium text-white"
+        >
+          {testingSound ? "Stop test sound" : "Test sound (Stage 3 alarm)"}
+        </button>
+      </div>
+
       <button
         onClick={() => {
           unlockAudio();
@@ -132,6 +158,7 @@ export default function Home() {
           <button
             onClick={() => {
               unlockAudio();
+              setTestingSound(false);
               escalation.trigger();
             }}
             className="rounded-full bg-zinc-800 px-4 py-2 text-white dark:bg-zinc-200 dark:text-black"
@@ -145,7 +172,10 @@ export default function Home() {
             Simulate screen-on (pause)
           </button>
           <button
-            onClick={escalation.dismiss}
+            onClick={() => {
+              setTestingSound(false);
+              escalation.dismiss();
+            }}
             className="rounded-full bg-red-600 px-4 py-2 text-white"
           >
             I&apos;m awake

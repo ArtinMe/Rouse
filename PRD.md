@@ -184,6 +184,15 @@ disturbing other passengers by default.
   inactivity and need a resubscribe check on app open.
 - **iOS vibration:** no reliable unattended custom vibration API. Stage 1
   on iOS relies on the OS's own notification haptic, not custom JS.
+- **iOS ring/silent switch and system volume:** both mute/scale all web
+  audio, with no web API to detect the switch's state or override either.
+  Confirmed in Phase 1 testing — if the phone is silenced, the client-side
+  audio layer produces no sound at all, and there is no code-level fix.
+  The app must tell the user plainly to check ringer/volume rather than
+  silently failing; it cannot verify this itself. Vibration is a separate
+  setting from the ring switch, so a real Phase 4 push notification will
+  still vibrate on silent even though this client-side audio can't play —
+  one concrete reason Web Push isn't just a backgrounded nice-to-have.
 - Because of both constraints, the client-side geofence check (while the
   tab/PWA is foregrounded) is the primary trigger; Web Push is the
   backgrounded fallback, not the sole mechanism.
@@ -234,6 +243,11 @@ See README.md for full detail. Key points relevant to this PRD:
 - **False positives in reconciliation** (waking the user early/often) could
   erode trust in the app faster than a false negative would — worth
   weighting failure-mode design toward this in testing.
+- **Silenced/muted phone defeats client-side audio entirely, with no way
+  for the app to detect or override it (§8).** Until Phase 4 push lands,
+  a user who forgets to unmute their ringer gets no wake-up at all — this
+  needs explicit, hard-to-miss onboarding messaging, not just a hope that
+  users remember.
 
 ## 11a. Default settings (all user-editable)
 
