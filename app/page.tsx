@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { playAudioForStage, stopAudio, unlockAudio } from "@/lib/audio";
 import { watchGeofence, type GeofenceUpdate } from "@/lib/geofence";
 import { isIOSDevice, stopVibration, vibrateForStage } from "@/lib/haptics";
 import { mockTrip } from "@/lib/mockTrip";
@@ -26,6 +27,11 @@ export default function Home() {
   useEffect(() => {
     vibrateForStage(escalation.state);
     return () => stopVibration();
+  }, [escalation.state]);
+
+  useEffect(() => {
+    playAudioForStage(escalation.state);
+    return () => stopAudio();
   }, [escalation.state]);
 
   useEffect(() => {
@@ -71,7 +77,10 @@ export default function Home() {
       </div>
 
       <button
-        onClick={() => setWatching((w) => !w)}
+        onClick={() => {
+          unlockAudio();
+          setWatching((w) => !w);
+        }}
         className="rounded-full bg-indigo-600 px-6 py-3 font-medium text-white"
       >
         {watching ? "Stop watching" : "Start watching (mock trip)"}
@@ -110,8 +119,8 @@ export default function Home() {
         </p>
         {isIOS && (
           <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
-            iOS: no custom vibration this phase — audio (Stage 2/3, next
-            step) is what you can test here.
+            iOS: no custom vibration this phase — rely on audio (Stage
+            2/3) here instead.
           </p>
         )}
         {msRemaining !== null && (
@@ -121,7 +130,10 @@ export default function Home() {
         )}
         <div className="mt-3 flex flex-wrap gap-2">
           <button
-            onClick={escalation.trigger}
+            onClick={() => {
+              unlockAudio();
+              escalation.trigger();
+            }}
             className="rounded-full bg-zinc-800 px-4 py-2 text-white dark:bg-zinc-200 dark:text-black"
           >
             Simulate trigger
