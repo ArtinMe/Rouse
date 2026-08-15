@@ -1,17 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { watchGeofence, type GeofenceUpdate } from "@/lib/geofence";
+import { isIOSDevice, stopVibration, vibrateForStage } from "@/lib/haptics";
 import { mockTrip } from "@/lib/mockTrip";
 import { useEscalation } from "@/lib/useEscalation";
+
+function subscribeNoop() {
+  return () => {};
+}
 
 export default function Home() {
   const [update, setUpdate] = useState<GeofenceUpdate | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [watching, setWatching] = useState(false);
   const [msRemaining, setMsRemaining] = useState<number | null>(null);
+  const isIOS = useSyncExternalStore(
+    subscribeNoop,
+    isIOSDevice,
+    () => false,
+  );
 
   const escalation = useEscalation();
+
+  useEffect(() => {
+    vibrateForStage(escalation.state);
+    return () => stopVibration();
+  }, [escalation.state]);
 
   useEffect(() => {
     if (!watching) return;
@@ -93,6 +108,12 @@ export default function Home() {
         <p className="mt-1 text-lg font-semibold text-black dark:text-zinc-50">
           {escalation.state}
         </p>
+        {isIOS && (
+          <p className="mt-1 text-xs text-amber-600 dark:text-amber-500">
+            iOS: no custom vibration this phase — audio (Stage 2/3, next
+            step) is what you can test here.
+          </p>
+        )}
         {msRemaining !== null && (
           <p className="text-zinc-500 dark:text-zinc-400">
             Next stage in {(msRemaining / 1000).toFixed(1)}s
