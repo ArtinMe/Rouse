@@ -6,6 +6,7 @@ import { watchGeofence, type GeofenceUpdate } from "@/lib/geofence";
 import { isIOSDevice, stopVibration, vibrateForStage } from "@/lib/haptics";
 import { mockTrip } from "@/lib/mockTrip";
 import { useEscalation } from "@/lib/useEscalation";
+import { DismissButton } from "@/components/DismissButton";
 
 function subscribeNoop() {
   return () => {};
@@ -76,6 +77,15 @@ export default function Home() {
           Wakes you up before you miss your stop.
         </p>
       </div>
+
+      {escalation.state !== "armed" && escalation.state !== "dismissed" && (
+        <DismissButton
+          onDismiss={() => {
+            setTestingSound(false);
+            escalation.dismiss();
+          }}
+        />
+      )}
 
       <div className="w-full max-w-sm rounded-lg border border-amber-300 bg-amber-50 p-3 text-left text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
         <p className="font-medium">Before relying on this: check your phone.</p>
@@ -171,16 +181,12 @@ export default function Home() {
           >
             Simulate screen-on (pause)
           </button>
-          <button
-            onClick={() => {
-              setTestingSound(false);
-              escalation.dismiss();
-            }}
-            className="rounded-full bg-red-600 px-4 py-2 text-white"
-          >
-            I&apos;m awake
-          </button>
         </div>
+        {escalation.state !== "armed" && escalation.state !== "dismissed" && (
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            Use the big red button above to dismiss.
+          </p>
+        )}
       </div>
     </div>
   );
